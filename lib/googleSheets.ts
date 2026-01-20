@@ -83,6 +83,57 @@ export async function addChiPhi(data: Omit<ChiPhi, 'id'>): Promise<void> {
   }
 }
 
+export async function deleteChiPhi(id: number): Promise<void> {
+  try {
+    const sheetId = getSheetId(process.env.GOOGLE_SHEETS_ID);
+    // Row index = id + 1 (vì có header row ở row 1, data bắt đầu từ row 2)
+    // id bắt đầu từ 1, nên row index = id + 1
+    const rowIndex = id + 1;
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: 0, // Sheet1
+                dimension: 'ROWS',
+                startIndex: rowIndex - 1, // 0-based index
+                endIndex: rowIndex,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    // Sau khi xóa, cần cập nhật lại ID cho các hàng còn lại
+    const remainingData = await getChiPhi();
+    if (remainingData.length > 0) {
+      const updateValues = remainingData.map((item, index) => [
+        (index + 1).toString(),
+        item.khoanChi,
+        item.diaDiem,
+        item.soTien.toString(),
+        item.ngayThang,
+      ]);
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: sheetId,
+        range: 'Sheet1!A2:E',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: updateValues,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Lỗi khi xóa dữ liệu từ Google Sheets:', error);
+    throw error;
+  }
+}
+
 export async function initSheet(): Promise<void> {
   try {
     const sheetId = getSheetId(process.env.GOOGLE_SHEETS_ID);

@@ -55,6 +55,28 @@ export default function TableHienThi() {
     window.print();
   };
 
+  const handleDelete = async (id: number) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa chi phí này?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/chi-phi?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh dữ liệu sau khi xóa
+        await fetchData();
+      } else {
+        setError('Không thể xóa chi phí');
+      }
+    } catch (err) {
+      setError('Có lỗi xảy ra khi xóa chi phí');
+      console.error(err);
+    }
+  };
+
   return (
     <>
       <style jsx global>{`
@@ -197,10 +219,16 @@ export default function TableHienThi() {
                       📅 {formatDate(item.ngayThang)}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex flex-col items-end gap-2">
                     <p className="text-lg font-bold text-gray-900">
                       {formatCurrency(item.soTien)}
                     </p>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-xs no-print"
+                    >
+                      Xóa
+                    </button>
                   </div>
                 </div>
               </div>
@@ -240,6 +268,9 @@ export default function TableHienThi() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Ngày tháng
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">
+                      Thao tác
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -260,6 +291,14 @@ export default function TableHienThi() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDate(item.ngayThang)}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 no-print">
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-xs"
+                        >
+                          Xóa
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -271,7 +310,8 @@ export default function TableHienThi() {
                     <td className="px-6 py-4 text-sm font-bold text-gray-900">
                       {formatCurrency(data.reduce((sum, item) => sum + item.soTien, 0))}
                     </td>
-                    <td></td>
+                    <td className="no-print"></td>
+                    <td className="no-print"></td>
                   </tr>
                 </tfoot>
               </table>

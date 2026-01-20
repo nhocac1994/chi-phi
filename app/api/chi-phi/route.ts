@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getChiPhi, addChiPhi, initSheet } from '@/lib/googleSheets';
+import { getChiPhi, addChiPhi, initSheet, deleteChiPhi } from '@/lib/googleSheets';
 
 export async function GET() {
   try {
@@ -37,6 +37,29 @@ export async function PUT(request: NextRequest) {
     console.error('Lỗi API PUT:', error);
     return NextResponse.json(
       { error: 'Không thể khởi tạo sheet' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = parseInt(searchParams.get('id') || '0');
+    
+    if (!id || id <= 0) {
+      return NextResponse.json(
+        { error: 'ID không hợp lệ' },
+        { status: 400 }
+      );
+    }
+
+    await deleteChiPhi(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Lỗi API DELETE:', error);
+    return NextResponse.json(
+      { error: 'Không thể xóa dữ liệu' },
       { status: 500 }
     );
   }
