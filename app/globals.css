@@ -181,3 +181,18 @@ body {
   appearance: none;
   background-image: none;
 }
+
+/* Ô ngày — không tràn màn hình mobile (Safari iOS) */
+.date-input-compact {
+  box-sizing: border-box;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .date-input-compact {
+    max-width: 10.5rem;
+    width: 10.5rem;
+  }
+}

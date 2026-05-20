@@ -127,38 +127,37 @@ export default function FormNhapLieu({
           </datalist>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label htmlFor="soTien" className="block text-xs font-medium text-slate-600 mb-0.5">
-              Số tiền
-            </label>
-            <input
-              type="text"
-              id="soTien"
-              required
-              inputMode="numeric"
-              value={formData.soTien ? `${formatVndInput(formData.soTien)} đ` : ''}
-              onChange={(e) => {
-                const digits = digitsFromAnyInput(e.target.value);
-                setFormData({ ...formData, soTien: digits });
-              }}
-              className={inputClass}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label htmlFor="ngayThang" className="block text-xs font-medium text-slate-600 mb-0.5">
-              Ngày
-            </label>
-            <input
-              type="date"
-              id="ngayThang"
-              required
-              value={formData.ngayThang}
-              onChange={(e) => setFormData({ ...formData, ngayThang: e.target.value })}
-              className={inputClass}
-            />
-          </div>
+        <div>
+          <label htmlFor="soTien" className="block text-xs font-medium text-slate-600 mb-0.5">
+            Số tiền
+          </label>
+          <input
+            type="text"
+            id="soTien"
+            required
+            inputMode="numeric"
+            value={formData.soTien ? `${formatVndInput(formData.soTien)} đ` : ''}
+            onChange={(e) => {
+              const digits = digitsFromAnyInput(e.target.value);
+              setFormData({ ...formData, soTien: digits });
+            }}
+            className={inputClass}
+            placeholder="0"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="ngayThang" className="block text-xs font-medium text-slate-600 mb-0.5">
+            Ngày
+          </label>
+          <input
+            type="date"
+            id="ngayThang"
+            required
+            value={formData.ngayThang}
+            onChange={(e) => setFormData({ ...formData, ngayThang: e.target.value })}
+            className={`${inputClass} date-input-compact max-w-[10.5rem] w-full`}
+          />
         </div>
 
         <button
