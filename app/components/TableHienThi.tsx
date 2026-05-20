@@ -1,326 +1,154 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { deleteChiPhi, type ChiPhi } from '@/lib/steinSheets';
+import IconButton, { IconPrint, IconRefresh } from './IconButton';
 
-interface ChiPhi {
-  id: number;
-  khoanChi: string;
-  diaDiem: string;
-  soTien: number;
-  ngayThang: string;
+interface TableHienThiProps {
+  data: ChiPhi[];
+  currentDot: string;
+  loading: boolean;
+  error: string;
+  onRefresh: () => void;
 }
 
-export default function TableHienThi() {
-  const [data, setData] = useState<ChiPhi[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+export default function TableHienThi({
+  data,
+  currentDot,
+  loading,
+  error,
+  onRefresh,
+}: TableHienThiProps) {
+  const total = data.reduce((sum, item) => sum + item.soTien, 0);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/chi-phi');
-      if (response.ok) {
-        const result = await response.json();
-        setData(result);
-        setError('');
-      } else {
-        setError('Không thể tải dữ liệu từ Google Sheets');
-      }
-    } catch (err) {
-      setError('Có lỗi xảy ra khi tải dữ liệu');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const formatMoney = (amount: number, compact = false) => {
+    const n = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(amount);
+    return compact ? n : `${n} đ`;
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string, forPrint = false) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN');
+    const d = new Date(dateString);
+    if (forPrint) {
+      return d.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    }
+    return d.toLocaleDateString('vi-VN', {
+      day: 'numeric',
+      month: 'numeric',
+      year: '2-digit',
+    });
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa chi phí này?')) {
-      return;
-    }
-
+    if (!confirm('Xóa chi phí này?')) return;
     try {
-      const response = await fetch(`/api/chi-phi?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        // Refresh dữ liệu sau khi xóa
-        await fetchData();
-      } else {
-        setError('Không thể xóa chi phí');
-      }
+      await deleteChiPhi(id, currentDot);
+      onRefresh();
     } catch (err) {
-      setError('Có lỗi xảy ra khi xóa chi phí');
       console.error(err);
+      alert('Không thể xóa');
     }
   };
 
   return (
-    <>
-      <style jsx global>{`
-        @media print {
-          @page {
-            margin: 1cm;
-            size: A4;
-          }
-          
-          body * {
-            visibility: hidden;
-          }
-          
-          .print-container,
-          .print-container * {
-            visibility: visible;
-          }
-          
-          .print-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white;
-            padding: 0;
-            margin: 0;
-          }
-          
-          .no-print {
-            display: none !important;
-          }
-          
-          /* Ẩn card view khi in */
-          .mobile-card-view {
-            display: none !important;
-          }
-          
-          /* Đảm bảo table view hiển thị khi in */
-          .desktop-table-view {
-            display: block !important;
-          }
-          
-          .print-container table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 12px;
-            margin: 0;
-          }
-          
-          .print-container th,
-          .print-container td {
-            border: 1px solid #d1d5db;
-            padding: 8px 12px;
-            text-align: left;
-          }
-          
-          .print-container th {
-            background-color: #f3f4f6 !important;
-            font-weight: bold;
-            color: #374151;
-            text-transform: uppercase;
-            font-size: 11px;
-          }
-          
-          .print-container tbody tr {
-            page-break-inside: avoid;
-          }
-          
-          .print-container tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-          }
-          
-          .print-container tfoot {
-            background-color: #f3f4f6 !important;
-            font-weight: bold;
-          }
-          
-          .print-container .print-title {
-            display: block !important;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 20px;
-          }
-        }
-      `}</style>
-      <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-        <div className="flex justify-between items-center mb-6 no-print">
-          <h2 className="text-2xl font-bold text-gray-800">Báo Cáo Chi Phí</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={handlePrint}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
-            >
-              In
-            </button>
-            <button
-              onClick={fetchData}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            >
-              Làm mới
-            </button>
-          </div>
-        </div>
+    <div className="print-report max-w-6xl mx-auto px-2 py-3 sm:px-4 sm:py-4 bg-white rounded-lg shadow-sm sm:shadow-md">
+      <h2
+        className="print-title hidden text-center font-bold text-gray-800"
+        aria-hidden
+      >
+        Báo Cáo Chi Phí
+      </h2>
 
-      {loading ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
+      <div className="no-print flex items-center justify-between gap-2 mb-2">
+        <h2 className="text-base font-bold text-gray-800">Báo Cáo Chi Phí</h2>
+        <div className="flex shrink-0 gap-1.5">
+          <IconButton label="In báo cáo" onClick={handlePrint} variant="light">
+            <IconPrint className="w-[18px] h-[18px] text-emerald-700" />
+          </IconButton>
+          <IconButton
+            label="Làm mới dữ liệu"
+            onClick={onRefresh}
+            disabled={loading}
+            variant="light"
+          >
+            {loading ? (
+              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <IconRefresh className="w-[18px] h-[18px] text-blue-700" />
+            )}
+          </IconButton>
         </div>
-      ) : error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+      </div>
+
+      {loading && data.length === 0 ? (
+        <p className="text-center text-sm text-gray-500 py-6 no-print">Đang tải...</p>
+      ) : error && data.length === 0 ? (
+        <p className="text-sm text-red-600 px-2 py-4 no-print">{error}</p>
       ) : data.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">Chưa có dữ liệu chi phí nào</p>
-        </div>
+        <p className="text-center text-sm text-gray-500 py-6 no-print">Chưa có dữ liệu</p>
       ) : (
         <>
-          {/* Mobile Card View */}
-          <div className="mobile-card-view md:hidden space-y-4">
-            {data.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white border border-gray-200 rounded-lg shadow-sm p-4"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                        #{item.id}
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
-                        {item.khoanChi}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-1">
-                      📍 {item.diaDiem}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      📅 {formatDate(item.ngayThang)}
-                    </p>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <p className="text-lg font-bold text-gray-900">
-                      {formatCurrency(item.soTien)}
-                    </p>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-xs no-print"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {/* Total Card for Mobile */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-gray-900">Tổng cộng:</span>
-                <span className="text-lg font-bold text-gray-900">
-                  {formatCurrency(data.reduce((sum, item) => sum + item.soTien, 0))}
-                </span>
-              </div>
-            </div>
+          <div className="overflow-x-auto -mx-0.5">
+            <table className="report-table">
+              <thead>
+                <tr>
+                  <th className="col-stt">#</th>
+                  <th className="col-khoan">Khoản chi</th>
+                  <th className="col-dia">Địa điểm</th>
+                  <th className="col-money">Tiền</th>
+                  <th className="col-date">Ngày</th>
+                  <th className="col-action no-print" aria-label="Thao tác" />
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/80">
+                    <td className="col-stt text-slate-500">{item.id}</td>
+                    <td className="col-khoan font-medium truncate">{item.khoanChi}</td>
+                    <td className="col-dia truncate text-slate-600">{item.diaDiem}</td>
+                    <td className="col-money">{formatMoney(item.soTien)}</td>
+                    <td className="col-date">
+                      <span className="screen-date">{formatDate(item.ngayThang)}</span>
+                      <span className="print-date">{formatDate(item.ngayThang, true)}</span>
+                    </td>
+                    <td className="col-action no-print">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id!)}
+                        className="w-7 h-7 flex items-center justify-center text-red-600 hover:bg-red-50 rounded active:bg-red-100"
+                        aria-label="Xóa"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-50 font-semibold">
+                  <td colSpan={3} className="text-xs sm:text-sm">
+                    Tổng ({data.length} khoản)
+                  </td>
+                  <td className="col-money text-sm">{formatMoney(total)}</td>
+                  <td className="col-date" />
+                  <td className="no-print" />
+                </tr>
+              </tfoot>
+            </table>
           </div>
 
-          {/* Desktop Table View */}
-          <div className="print-container desktop-table-view hidden md:block">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 print-title" style={{ display: 'none' }}>
-              Báo Cáo Chi Phí
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      #
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Khoản Chi
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Địa điểm
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Số Tiền
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ngày tháng
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">
-                      Thao tác
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {data.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.khoanChi}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.diaDiem}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {formatCurrency(item.soTien)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(item.ngayThang)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 no-print">
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-xs"
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <td colSpan={3} className="px-6 py-4 text-sm font-bold text-gray-900">
-                      Tổng cộng:
-                    </td>
-                    <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.soTien, 0))}
-                    </td>
-                    <td className="no-print"></td>
-                    <td className="no-print"></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
+          <p className="no-print mt-2 text-right text-sm font-bold text-gray-800 sm:hidden">
+            Tổng: {formatMoney(total)}
+          </p>
         </>
       )}
     </div>
-    </>
   );
 }
-

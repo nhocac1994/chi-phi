@@ -1,6 +1,13 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover' as const,
+};
+
 export const metadata: Metadata = {
   title: 'Chi Phí',
   description: 'Quản lý chi phí đi lại',
@@ -27,7 +34,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body>{children}</body>
+      <body className="text-slate-900 antialiased">{children}</body>
     </html>
   )
 }

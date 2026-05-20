@@ -22,3 +22,162 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Bảng báo cáo — gọn trên mobile & màn hình */
+.report-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.report-table th,
+.report-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.35rem 0.4rem;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-table thead th {
+  background: #f8fafc;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.report-table tbody td {
+  font-size: 0.75rem;
+  color: #1e293b;
+}
+
+.report-table .col-stt { width: 2rem; text-align: center; }
+.report-table .col-money { text-align: right; font-weight: 600; white-space: nowrap; }
+.report-table .col-date { text-align: center; white-space: nowrap; font-size: 0.7rem; color: #64748b; }
+.report-table .col-action { width: 2.25rem; text-align: center; }
+
+@media (min-width: 768px) {
+  .report-table th,
+  .report-table td {
+    padding: 0.5rem 0.65rem;
+  }
+  .report-table thead th { font-size: 0.7rem; }
+  .report-table tbody td { font-size: 0.8125rem; }
+}
+
+/* In — cân bằng: chữ đủ lớn, ~28–32 hàng/trang A4 */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0.55cm 0.65cm;
+  }
+
+  body {
+    background: white !important;
+    font-size: 9pt;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-report,
+  .print-report * {
+    visibility: visible;
+  }
+
+  .print-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-report .print-title {
+    display: block !important;
+    font-size: 14pt;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 8pt 0;
+    padding: 0;
+    line-height: 1.25;
+    color: #0f172a;
+  }
+
+  .print-report .report-table {
+    font-size: 9pt;
+    line-height: 1.25;
+    width: 100%;
+  }
+
+  .print-report .report-table th,
+  .print-report .report-table td {
+    border: 0.6pt solid #94a3b8 !important;
+    padding: 2.5pt 4pt !important;
+    font-size: 9pt !important;
+    color: #0f172a !important;
+  }
+
+  .print-report .report-table thead th {
+    background: #e2e8f0 !important;
+    font-size: 8.5pt !important;
+    font-weight: 700 !important;
+    padding: 3pt 4pt !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-report .report-table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .print-report .report-table tbody td.col-money {
+    font-weight: 600 !important;
+  }
+
+  .print-report .report-table tfoot td {
+    font-size: 9.5pt !important;
+    font-weight: 700 !important;
+    padding: 3.5pt 4pt !important;
+    background: #e2e8f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-report .col-stt { width: 6% !important; }
+  .print-report .col-khoan { width: 30% !important; }
+  .print-report .col-dia { width: 24% !important; }
+  .print-report .col-money { width: 22% !important; }
+  .print-report .col-date { width: 14% !important; }
+
+  .print-report .screen-date {
+    display: none !important;
+  }
+
+  .print-report .print-date {
+    display: inline !important;
+  }
+}
+
+.report-table .print-date {
+  display: none;
+}
+
+/* Select đợt — tránh lỗi hiển thị native trên mobile */
+.dot-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+}

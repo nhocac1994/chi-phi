@@ -48,19 +48,16 @@ cp env.local.template .env.example
    - Chọn "GitHub" và authorize Netlify
    - Chọn repository `nhocac1994/chi-phi`
 
-3. **Cấu hình Build Settings:**
+3. **Cấu hình Build Settings** (Netlify tự nhận qua `netlify.toml`):
    - **Build command:** `npm run build`
-   - **Publish directory:** `.next`
-   - **Base directory:** (để trống)
+   - **Plugin:** `@netlify/plugin-nextjs` (không cần chỉnh publish directory thủ công)
 
-4. **Thêm Environment Variables:**
-   - Vào "Site settings" > "Environment variables"
-   - Thêm các biến sau:
-     ```
-     GOOGLE_SHEETS_ID=your_sheet_id_here
-     GOOGLE_SERVICE_ACCOUNT_EMAIL=your_service_account@project.iam.gserviceaccount.com
-     GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key\n-----END PRIVATE KEY-----\n"
-     ```
+4. **Thêm Environment Variables** (Site settings → Environment variables):
+   ```
+   NEXT_PUBLIC_STEIN_API_URL=https://api.steinhq.com/v1/storages/6a0ddd4b92b1163e97f81310/sheet1
+   STEIN_API_URL=https://api.steinhq.com/v1/storages/6a0ddd4b92b1163e97f81310/sheet1
+   ```
+   Thêm cột **Đợt** trên Google Sheet (hàng tiêu đề) nếu chưa có.
 
 5. **Deploy:**
    - Click "Deploy site"

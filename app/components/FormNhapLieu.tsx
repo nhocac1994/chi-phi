@@ -1,27 +1,32 @@
 'use client';
 
 import { useState } from 'react';
+import { addChiPhi } from '@/lib/steinSheets';
 
 interface FormData {
   khoanChi: string;
   diaDiem: string;
-  soTien: string; // lưu dạng số (chỉ digits) để submit: "300000"
+  soTien: string;
   ngayThang: string;
 }
 
 function formatVndInput(digitsOnly: string) {
   const n = Number(digitsOnly || '0');
   if (!Number.isFinite(n) || n <= 0) return '';
-  // 300000 -> "300.000"
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(n);
 }
 
 function digitsFromAnyInput(value: string) {
-  // nhận "300.000 đ" -> "300000"
   return value.replace(/[^\d]/g, '');
 }
 
-export default function FormNhapLieu({ onSuccess }: { onSuccess: () => void }) {
+export default function FormNhapLieu({
+  dot,
+  onSuccess,
+}: {
+  dot: string;
+  onSuccess: () => void;
+}) {
   const [formData, setFormData] = useState<FormData>({
     khoanChi: '',
     diaDiem: '',
@@ -43,47 +48,39 @@ export default function FormNhapLieu({ onSuccess }: { onSuccess: () => void }) {
         return;
       }
 
-      const response = await fetch('/api/chi-phi', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          khoanChi: formData.khoanChi,
-          diaDiem: formData.diaDiem,
-          soTien: soTienNumber,
-          ngayThang: formData.ngayThang,
-        }),
+      await addChiPhi({
+        dot,
+        khoanChi: formData.khoanChi,
+        diaDiem: formData.diaDiem,
+        soTien: soTienNumber,
+        ngayThang: formData.ngayThang,
       });
 
-      if (response.ok) {
-        setMessage('Thêm chi phí thành công!');
-        setFormData({
-          khoanChi: '',
-          diaDiem: '',
-          soTien: '',
-          ngayThang: new Date().toISOString().split('T')[0],
-        });
-        onSuccess();
-      } else {
-        setMessage('Có lỗi xảy ra khi thêm chi phí');
-      }
+      setMessage('Đã lưu!');
+      setFormData({
+        khoanChi: '',
+        diaDiem: '',
+        soTien: '',
+        ngayThang: new Date().toISOString().split('T')[0],
+      });
+      onSuccess();
     } catch (error) {
-      setMessage('Có lỗi xảy ra khi thêm chi phí');
+      setMessage('Lỗi khi lưu');
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  const inputClass =
+    'w-full h-9 px-2.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Nhập Chi Phí</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200/80 p-3">
+      <form onSubmit={handleSubmit} className="space-y-2.5">
         <div>
-          <label htmlFor="khoanChi" className="block text-sm font-medium text-gray-700 mb-1">
-            Khoản Chi *
+          <label htmlFor="khoanChi" className="block text-xs font-medium text-slate-600 mb-0.5">
+            Khoản chi
           </label>
           <input
             type="text"
@@ -92,8 +89,8 @@ export default function FormNhapLieu({ onSuccess }: { onSuccess: () => void }) {
             required
             value={formData.khoanChi}
             onChange={(e) => setFormData({ ...formData, khoanChi: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Nhập khoản chi"
+            className={inputClass}
+            placeholder="Ăn, Xăng..."
           />
           <datalist id="khoanChiOptions">
             <option value="Ăn" />
@@ -104,8 +101,8 @@ export default function FormNhapLieu({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         <div>
-          <label htmlFor="diaDiem" className="block text-sm font-medium text-gray-700 mb-1">
-            Địa điểm *
+          <label htmlFor="diaDiem" className="block text-xs font-medium text-slate-600 mb-0.5">
+            Địa điểm
           </label>
           <input
             type="text"
@@ -114,8 +111,8 @@ export default function FormNhapLieu({ onSuccess }: { onSuccess: () => void }) {
             required
             value={formData.diaDiem}
             onChange={(e) => setFormData({ ...formData, diaDiem: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Nhập địa điểm"
+            className={inputClass}
+            placeholder="HCM, Châu đốc..."
           />
           <datalist id="diaDiemOptions">
             <option value="HCM" />
@@ -130,54 +127,60 @@ export default function FormNhapLieu({ onSuccess }: { onSuccess: () => void }) {
           </datalist>
         </div>
 
-        <div>
-          <label htmlFor="soTien" className="block text-sm font-medium text-gray-700 mb-1">
-            Số Tiền *
-          </label>
-          <input
-            type="text"
-            id="soTien"
-            required
-            inputMode="numeric"
-            value={formData.soTien ? `${formatVndInput(formData.soTien)} đ` : ''}
-            onChange={(e) => {
-              const digits = digitsFromAnyInput(e.target.value);
-              setFormData({ ...formData, soTien: digits });
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Nhập số tiền"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="ngayThang" className="block text-sm font-medium text-gray-700 mb-1">
-            Ngày tháng *
-          </label>
-          <input
-            type="date"
-            id="ngayThang"
-            required
-            value={formData.ngayThang}
-            onChange={(e) => setFormData({ ...formData, ngayThang: e.target.value })}
-            className="w-[180px] px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label htmlFor="soTien" className="block text-xs font-medium text-slate-600 mb-0.5">
+              Số tiền
+            </label>
+            <input
+              type="text"
+              id="soTien"
+              required
+              inputMode="numeric"
+              value={formData.soTien ? `${formatVndInput(formData.soTien)} đ` : ''}
+              onChange={(e) => {
+                const digits = digitsFromAnyInput(e.target.value);
+                setFormData({ ...formData, soTien: digits });
+              }}
+              className={inputClass}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label htmlFor="ngayThang" className="block text-xs font-medium text-slate-600 mb-0.5">
+              Ngày
+            </label>
+            <input
+              type="date"
+              id="ngayThang"
+              required
+              value={formData.ngayThang}
+              onChange={(e) => setFormData({ ...formData, ngayThang: e.target.value })}
+              className={inputClass}
+            />
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="w-full h-10 text-sm font-semibold bg-blue-600 text-white rounded-md active:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? 'Đang lưu...' : 'Lưu'}
+          {loading ? 'Đang lưu...' : 'Lưu chi phí'}
         </button>
 
         {message && (
-          <div className={`p-3 rounded-md ${message.includes('thành công') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <p
+            className={`text-center text-xs py-1.5 rounded ${
+              message.includes('lưu') || message.includes('Lưu') || message === 'Đã lưu!'
+                ? 'bg-green-50 text-green-700'
+                : 'bg-red-50 text-red-700'
+            }`}
+          >
             {message}
-          </div>
+          </p>
         )}
       </form>
     </div>
   );
 }
-

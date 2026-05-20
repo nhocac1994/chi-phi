@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getChiPhi, addChiPhi, initSheet, deleteChiPhi } from '@/lib/googleSheets';
+import { getChiPhi, addChiPhi, initSheet, deleteChiPhi } from '@/lib/steinSheets';
 
 export async function GET() {
   try {
@@ -46,7 +46,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = parseInt(searchParams.get('id') || '0');
-    
+    const dot = searchParams.get('dot') || '1';
+
     if (!id || id <= 0) {
       return NextResponse.json(
         { error: 'ID không hợp lệ' },
@@ -54,7 +55,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteChiPhi(id);
+    await deleteChiPhi(id, dot);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Lỗi API DELETE:', error);
